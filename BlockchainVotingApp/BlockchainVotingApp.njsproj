@@ -51,6 +51,9 @@
     <Content Include="public\pollbg.png" />
     <Content Include="SC\eth_basic_vote_contract.sol" />
     <Content Include="src\App.vue" />
+    <Content Include="src\assets\main.css">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="src\components\Home.vue" />
     <Content Include="package.json" />
     <Content Include="README.md" />

@@ -1,27 +1,41 @@
 ﻿<template>
-    <div class="vote">
-        Contract address : {{contractAddress}}
-        <b-button @click="getPollData">getPollData</b-button>
-        <b-button @click="addPollItem">addPollItem</b-button>
-        <b-button @click="vote">vote</b-button>
-        <b-button @click="setActive">setActive</b-button>
-        <b-button @click="closePoll">closePoll</b-button>
-        <b-button @click="getPollItemFromPoll">getPollItemFromPoll</b-button>
+    <div class="mainBlock">
+        <div class="activeBlock">
+            <div class="activeBlockStatus">
+                <div class="activeBlockStatusKey">Status :</div>
+                <div class="activeBlockStatusValueInactive">Inactive</div>
+            </div>
+            <button @click="activateContractOpenPrompt" class="activeBlockButton">Activate Contract</button>
+        </div>
+        <div class="contractAddress">
+            <div class="contractAddressKey">Contract address :</div>
+            <div class="contractAddressValue">{{contractAddress}}</div>
+        </div>
+        <div class="contractActions">
+            
+        </div>
+        <div class="vote">
+            <!--<b-button @click="getPollData">getPollData</b-button>
+            <b-button @click="addPollItem">addPollItem</b-button>
+            <b-button @click="vote">vote</b-button>
+            <b-button @click="setActive">setActive</b-button>
+            <b-button @click="closePoll">closePoll</b-button>
+            <b-button @click="getPollItemFromPoll">getPollItemFromPoll</b-button>-->
+        </div>
     </div>
 </template>
 
 <script>
     import Vue from 'vue';
-    import BootstrapVue from 'bootstrap-vue';
+    //import BootstrapVue from 'bootstrap-vue';
     import jquery from 'jquery';
     import BlockPoll from '../eth.js';
 
-    import 'bootstrap/dist/css/bootstrap.css'
-    import 'bootstrap-vue/dist/bootstrap-vue.css'
-    import 'pc-bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.css';
+    //import 'bootstrap/dist/css/bootstrap.css'
+    //import 'bootstrap-vue/dist/bootstrap-vue.css'
+    //import 'pc-bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.css';
 
-
-    Vue.use(BootstrapVue);
+    //Vue.use(BootstrapVue);
     Vue.use(jquery);
     Vue.use(BlockPoll);
 
@@ -40,6 +54,74 @@
             });
         },
         methods: {
+
+            activateContractConfirm(callback)
+            {
+                return callback(true);
+                //setActive();
+            },
+
+            activateContractOpenPrompt()
+            {
+                if(document.getElementById('activeContractBackground')) return;
+
+                var background  = document.createElement('div');
+                var container   = document.createElement('div');
+                var popup       = document.createElement('div');
+                var buttons     = document.createElement('div');
+                var confirm     = document.createElement('button');
+                var cancel      = document.createElement('button');
+
+                background      .setAttribute('id', 'activeContractBackground');
+
+                background      .setAttribute('class', 'requestBackground');
+                container       .setAttribute('class', 'requestContainer');
+                popup           .setAttribute('class', 'requestPopup');
+                buttons         .setAttribute('class', 'requestPopupButtons');
+                confirm         .setAttribute('class', 'requestPopupConfirm');
+                cancel          .setAttribute('class', 'requestPopupCancel');
+
+                popup           .innerHTML += `<div class="requestPopupTitle">Activate Contract</div>`;
+                popup           .innerHTML += `<div class="requestPopupMessage">This contract cannot be modified once it has started. Are you sure ?</div>`;
+                
+                confirm         .innerText = 'Activate';
+                cancel          .innerText = 'Cancel';
+
+                confirm         .addEventListener('click', () =>
+                {
+                    activateContractConfirm((error) =>
+                    {
+                        console.log(error);
+                    });
+                });
+
+                cancel          .addEventListener('click', () =>
+                {
+                    container.remove();
+                    background.remove();
+                });
+
+                buttons         .appendChild(confirm);
+                buttons         .appendChild(cancel);
+                popup           .appendChild(buttons); 
+                container       .appendChild(popup);
+
+                document.body.appendChild(background);
+                document.body.appendChild(container);
+                /*BlockPoll.getContract(this.contractAddress).then((result) =>
+                {
+                    BlockPoll.getPollData(result).then((result) =>
+                    {
+                        console.log(result);
+
+                    }).catch((error) =>
+                    {
+                        console.log(error);
+                    });
+                });*/
+                //console.log(event.target);
+            },
+
             getPollData() {
                 BlockPoll.getContract(this.contractAddress).then(function (result) {
                     BlockPoll.getPollData(result).then(function (result) {
@@ -128,4 +210,5 @@
 </script>
 
 <style scoped>
+    @import '../assets/main.css';
 </style>
