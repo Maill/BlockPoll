@@ -1,6 +1,6 @@
 ﻿<template>
     <div class="vote">
-        Contract address : {{contractAddress}}
+        Contract address : {{contractAddress}} / Contract Owner : {{pollData.creator}} / Poll Items : {{pollData.pollItems}}
         <b-button @click="getPollData">getPollData</b-button>
         <b-button @click="addPollItem">addPollItem</b-button>
         <b-button @click="vote">vote</b-button>
@@ -19,6 +19,7 @@
     import 'bootstrap/dist/css/bootstrap.css'
     import 'bootstrap-vue/dist/bootstrap-vue.css'
     import 'pc-bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.css';
+import { clearInterval } from 'timers';
 
 
     Vue.use(BootstrapVue);
@@ -30,20 +31,35 @@
     export default {
         data() {
             return {
-                contractAddress: this.$router.history.current.params.contractAddress
+                contractAddress: this.$router.history.current.params.contractAddress,
+                pollData: null,
+                refresh: null,
             }
         },
         name: 'Vote',
         mounted() {
             this.$nextTick(function () {
                 window.instanceVue = this;
+                this.getPollData();
+                this.refresh = setInterval(function () {
+                    window.instanceVue.getPollData();
+                }, 15000);
             });
+        },
+        destroy() {
+            clearInterval(this.refresh);
         },
         methods: {
             getPollData() {
-                BlockPoll.getContract(this.contractAddress).then(function (result) {
-                    BlockPoll.getPollData(result).then(function (result) {
-                        console.log(result);
+                var self = this;
+
+                BlockPoll.getContract(this.contractAddress).then(function (contract) {
+                    BlockPoll.getPollData(contract).then(function (pollData) {
+                        BlockPoll.parsePollData(contract, pollData).then(function (pollObject) {
+                            self.pollData = pollObject;
+                        }).catch(function (error) {
+                            console.log(error);
+                        });
                     }).catch(function (error) {
                         console.log(error);
                     });
@@ -52,8 +68,9 @@
                 });
             },
             addPollItem() {
+                
                 BlockPoll.getContract(this.contractAddress).then(function (result) {
-                    BlockPoll.addPollItem(result, "Nicolas").then(function (result) {
+                    BlockPoll.addPollItem(result, "Random").then(function (result) {
                         BlockPoll.getTransactionReceiptMined(result).then(function (res) {
                             console.log(res);
                         }).catch(function (err) {
