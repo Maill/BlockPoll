@@ -110,11 +110,36 @@ var BlockPoll = {
             setTimeout(function () { receiptFunc(); }, 500);
         });
     },
-    parsePollData(data) {
+    async parsePollData(contract, data) {
+        return await new Promise(function (resolve, reject) {
+            var pollData = {
+                pollName: data[0],
+                creator: data[1],
+                active: data[2],
+                totalVotes: parseInt(data[3].toString()),
+                creationDate: new Date(parseInt(data[4].toString()) * 1000),
+                finishDate: new Date(parseInt(data[5].toString())),
+                pollItems: []
+            };
 
+            var nbPollItems = parseInt(data[6].toString());
+            for (var i = 0; i < nbPollItems; i++) {
+                BlockPoll.getPollItemFromPoll(contract, i).then(function (result) {
+                    var pollItem = BlockPoll.parsePollItem(result);
+                    pollData.pollItems.push(pollItem);
+                }).catch(function (error) {
+                    // eslint-disable-next-line
+                    reject(error);
+                });
+            }
+            resolve(pollData);
+        });
     },
-    parsePollItem(data) {
-
+    parsePollItem(data, i) {
+        return {
+            name: data[0],
+            votes: parseInt(data[1].toString())
+        };
     },
     checkIfWeb3IsInWindow() {
         return typeof window.web3 !== 'undefined' ? true : false;

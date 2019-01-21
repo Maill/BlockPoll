@@ -1,0 +1,119 @@
+﻿/****************************************************************************************************/
+
+body{ background-color:rgba(0,0,0,0.08); }
+
+/****************************************************************************************************/
+
+.requestBackground{ background-color:#000000; opacity:0.6; position:fixed; top:0; right:0; bottom:0; left:0; }
+
+.requestContainer{ position:fixed; top:0; right:0; bottom:0; left:0; display:flex; flex-direction:column; justify-content:center; }
+
+.requestPopup{ width:400px; background-color:#FFFFFF; border-radius:4px; margin:0 calc(50% - 200px) 0 calc(50% - 200px); }
+
+.requestPopupTitle{ font-size:1em; padding:10px; border-bottom:1px solid rgba(0,0,0,0.32); font-weight:bold; }
+
+.requestPopupMessage{ font-size:0.9em; margin:20px 10px 20px 10px; text-align:justify; }
+
+.requestPopupInput{ margin:20px 10px 20px 10px; border:1px solid rgba(0,0,0,0.32); border-radius:4px; width:calc(100% - 20px); padding:0 5px 0 5px; }
+
+.requestPopupButtons{ display:flex; flex-direction:row; align-items:center; justify-content:flex-end; margin-right:10px; flex-wrap:wrap; }
+
+.requestPopupConfirm{ margin:0 0 10px 10px; cursor:pointer; color:#FFFFFF; padding:5px 10px 5px 10px; border:none; border-radius:4px; font-size:0.9em; background-color:#5CB85C; }
+
+.requestPopupConfirm:hover{ background-color:#3A963A; }
+
+.requestPopupCancel{ margin:0 0 10px 10px; cursor:pointer; color:#FFFFFF; padding:5px 10px 5px 10px; border:none; border-radius:4px; font-size:0.9em; background-color:#D9534F; }
+
+.requestPopupCancel:hover{ background-color:#B7312D; }
+
+.requestLoader{ border:16px solid #F3F3F3; border-top:16px solid #3498DB; border-radius:50%; width:150px; height:150px; animation:spin 1s linear infinite; margin:0 calc(50% - 75px) 0 calc(50% - 75px); }
+
+@keyframes spin{ 0%{ transform:rotate(0deg); } 100%{ transform: rotate(360deg); } }
+
+.requestError{ width:400px; background-color:#FFFFFF; border-radius:4px; margin:0 calc(50% - 200px) 0 calc(50% - 200px); }
+
+.requestErrorTitle{ color:#D9534F; font-size:1em; font-weight:bold; padding:10px; border-bottom:1px solid rgba(0,0,0,0.32); }
+
+.requestErrorMessage{ color:rgba(0,0,0,0.8); font-size:0.9em; text-align:justify; margin:20px 10px 20px 10px; }
+
+.requestErrorClose{ margin:0 calc(50% - 75px) 10px calc(50% - 75px); width:150px; box-sizing:border-box; padding:5px 10px 5px 10px; background-color:rgba(0,0,0,0.32); cursor:pointer; border:none; border-radius:4px; }
+
+.requestErrorClose:hover{ background-color:rgba(0,0,0,0.48); }
+
+/****************************************************************************************************/
+
+.mainBlock { width:600px; margin:0 calc(50% - 300px) 0 calc(50% - 300px); padding:40px 20px 40px 20px; box-sizing:border-box; background-color:#FFFFFF; height:100%; min-height:100vh; }
+
+/****************************************************************************************************/
+
+.pollName{ font-size:1.2em; font-weight:bold; border-bottom:1px solid rgba(0,0,0,0.32); padding-bottom:10px; margin-bottom:20px; }
+
+/****************************************************************************************************/
+
+.activeBlock{ margin-bottom:20px; }
+
+.activeBlockStatus{ display:flex; flex-direction:row; align-items:center; justify-content:space-between; }
+
+.activeBlockStatusKey{ margin-right:10px; }
+
+.activeBlockStatusValueInactive{ color:#D9534F; }
+
+.activeBlockStatusValueActive{ color:#5CB85C; }
+
+.activeBlockButton{ margin-top:20px; border:none; border-radius:4px; padding:5px 10px 5px 10px; cursor:pointer; color:#FFFFFF; font-size:0.9em; background-color:#428BCA; box-shadow:0 2px 2px 0 rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.08); }
+
+.activeBlockButton:hover{ background-color:#2069A8; }
+
+/****************************************************************************************************/
+
+.contractAddress{ display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:space-between; border:1px solid rgba(0,0,0,0.32); border-radius:4px; padding:10px 5px 10px 5px; }
+
+.contractAddressKey{ margin:0 5px 0 5px; font-size:1em; font-style:italic; }
+
+.contractAddressValue{ margin:0 5px 0 5px; font-weight:bold; font-size:1em; }
+
+/****************************************************************************************************/
+
+.pollDates{ margin-top:20px; }
+
+.pollDateBlock{ display:flex; flex-direction:row; justify-content:space-between; align-items:center; }
+
+.pollDateKey{ font-style:italic; margin-right:10px; }
+
+.pollDateValue{ font-weight:bold; }
+
+/****************************************************************************************************/
+
+.pollItems{ margin-top:20px; box-shadow:0 2px 2px 0 rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.08); border-radius:4px; }
+
+.pollItemsTitle{ padding:10px; font-size:1.1em; font-weight:bold; margin-bottom:10px; border-bottom:1px solid rgba(0,0,0,0.32); }
+
+.pollItemsTotal{ display:flex; flex-direction:row; justify-content:space-between; align-items:center; margin:0 10px 0 10px; box-sizing:border-box; border-radius:4px; padding:5px; border:1px solid rgba(0,0,0,0.32); }
+
+.pollItemsTotalKey{ font-size:1em; font-style:italic; margin-right:10px; }
+
+.pollItemsTotalValue{ font-size:1.5em; font-weight:bold; }
+
+.pollItemsList{ list-style-type:none; padding:20px; }
+
+.pollItemsListElement{ display:flex; flex-direction:row; justify-content:space-between; align-items:center; }
+
+.pollItemsListElementLabel{ margin-bottom:10px; font-weight:bold; font-size:1.1em; }
+
+.pollItemsListElementValue{ font-size:0.9em; }
+
+.pollItemsAdd{ margin:10px; width:calc(100% - 20px); box-sizing:border-box; border:none; border-radius:4px; padding:5px 10px 5px 10px; color:#FFFFFF; cursor:pointer; background-color:#428BCA; }
+
+.pollItemsAdd:hover{ background-color:#2069A8; }
+
+/****************************************************************************************************/
+
+.pollVote{ cursor:pointer; padding:5px 10px 5px 10px; width:100%; margin-top:20px; border:none; border-radius:4px; color:#FFFFFF; background-color:#5CB85C; }
+
+.pollVote:hover{ background-color:#3A963A; }
+
+.pollClose{ cursor:pointer; padding:5px 10px 5px 10px; width:100%; margin-top:20px; border:none; border-radius:4px; color:#FFFFFF; background-color:#D9534F; }
+
+.pollClose:hover{ background-color:#B7312D; }
+
+/****************************************************************************************************/
