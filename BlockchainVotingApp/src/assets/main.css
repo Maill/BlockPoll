@@ -16,6 +16,14 @@ body{ background-color:rgba(0,0,0,0.08); }
 
 .requestPopupInput{ margin:20px 10px 20px 10px; border:1px solid rgba(0,0,0,0.32); border-radius:4px; width:calc(100% - 20px); padding:0 5px 0 5px; }
 
+.requestPopupList{ list-style-type:none; padding:0; margin:20px 10px 20px 10px; }
+
+.requestPopupListElement{ display:flex; flex-direction:row; justify-content:space-between; align-items:center; margin-bottom:5px; background-color:rgba(0,0,0,0.06); border-radius:4px; padding:5px; }
+
+.requestPopupListElementRadio{ margin-right:10px; }
+
+.requestPopupListElementLabel{ font-weight:bold; }
+
 .requestPopupButtons{ display:flex; flex-direction:row; align-items:center; justify-content:flex-end; margin-right:10px; flex-wrap:wrap; }
 
 .requestPopupConfirm{ margin:0 0 10px 10px; cursor:pointer; color:#FFFFFF; padding:5px 10px 5px 10px; border:none; border-radius:4px; font-size:0.9em; background-color:#5CB85C; }
@@ -30,6 +38,7 @@ body{ background-color:rgba(0,0,0,0.08); }
 
 @keyframes spin{ 0%{ transform:rotate(0deg); } 100%{ transform: rotate(360deg); } }
 
+
 .requestError{ width:400px; background-color:#FFFFFF; border-radius:4px; margin:0 calc(50% - 200px) 0 calc(50% - 200px); }
 
 .requestErrorTitle{ color:#D9534F; font-size:1em; font-weight:bold; padding:10px; border-bottom:1px solid rgba(0,0,0,0.32); }
@@ -39,6 +48,17 @@ body{ background-color:rgba(0,0,0,0.08); }
 .requestErrorClose{ margin:0 calc(50% - 75px) 10px calc(50% - 75px); width:150px; box-sizing:border-box; padding:5px 10px 5px 10px; background-color:rgba(0,0,0,0.32); cursor:pointer; border:none; border-radius:4px; }
 
 .requestErrorClose:hover{ background-color:rgba(0,0,0,0.48); }
+
+
+.requestSuccess{ width:400px; background-color:#FFFFFF; border-radius:4px; margin:0 calc(50% - 200px) 0 calc(50% - 200px); }
+
+.requestSuccessTitle{ color:#5CB85C; font-size:1em; font-weight:bold; padding:10px; border-bottom:1px solid rgba(0,0,0,0.32); }
+
+.requestSuccessMessage{ color:rgba(0,0,0,0.8); font-size:0.9em; text-align:justify; margin:20px 10px 20px 10px; }
+
+.requestSuccessClose{ margin:0 calc(50% - 75px) 10px calc(50% - 75px); width:150px; box-sizing:border-box; padding:5px 10px 5px 10px; background-color:rgba(0,0,0,0.32); cursor:pointer; border:none; border-radius:4px; }
+
+.requestSuccessClose:hover{ background-color:rgba(0,0,0,0.48); }
 
 /****************************************************************************************************/
 

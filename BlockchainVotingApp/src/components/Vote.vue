@@ -4,10 +4,12 @@
         <div class="activeBlock">
             <div class="activeBlockStatus">
                 <div class="activeBlockStatusKey">Status :</div>
-                <div id="pollStatus" v-if="pollData.active == false" class="activeBlockStatusValueInactive">Inactive</div>
+                <div id="pollStatus" v-if="pollData.close == true" class="activeBlockStatusValueInactive">Closed</div>
+                <div id="pollStatus" v-else-if="pollData.finishDate.getTime() < currentDate" class="activeBlockStatusValueInactive">Ended</div>
+                <div id="pollStatus" v-else-if="pollData.active == false" class="activeBlockStatusValueInactive">Inactive</div>
                 <div id="pollStatus" v-else class="activeBlockStatusValueActive">Active</div>
             </div>
-            <button id="pollActivate" v-if="pollData.active == false" @click="activateContractOpenPrompt" class="activeBlockButton">Activate Contract</button>
+            <button id="pollActivate" v-if="pollData.active == false && currentUser === pollData.creator && currentDate < pollData.finishDate.getTime() && pollData.close == false" @click="activateContractOpenPrompt" class="activeBlockButton">Activate Contract</button>
         </div>
         <div class="contractAddress">
             <div class="contractAddressKey">Contract address :</div>
@@ -39,16 +41,11 @@
                     <div class="pollItemsListElementValue">{{item.votes}}</div>
                 </li>
             </ul>
-            <button id="addItem" v-if="pollData.active == false" @click="addItemOpenForm" class="pollItemsAdd">Add Item</button>
+            <button id="addItem" v-if="pollData.active == false && currentUser === pollData.creator && currentDate < pollData.finishDate.getTime() && pollData.close == false" @click="addItemOpenForm" class="pollItemsAdd">Add Item</button>
         </div>
-        <button @click="pollVoteOpenPrompt" id="pollVote" v-if="pollData.active == true" class="pollVote">Vote</button>
+        <button @click="pollVoteOpenPrompt" id="pollVote" v-if="pollData.active == true && pollData.alreadyVoted == false" class="pollVote">Vote</button>
         <button @click="pollVoteOpenPrompt" id="pollVote" v-else class="pollVote" style="display:none">Vote</button>
-        <button @click="closePollOpenPrompt" id="pollClose" class="pollClose">End Poll</button>
-        <div class="vote">
-            <!--
-            <b-button @click="vote">vote</b-button>
-            <b-button @click="closePoll">closePoll</b-button>-->
-        </div>
+        <button @click="closePollOpenPrompt" id="pollClose" class="pollClose" v-if="pollData.close == false && currentUser === pollData.creator && currentDate < pollData.finishDate.getTime()">End Poll</button>
     </div>
 </template>
 
@@ -57,12 +54,13 @@
     //import BootstrapVue from 'bootstrap-vue';
     import jquery from 'jquery';
     import BlockPoll from '../eth.js';
+    import Methods from '../assets/methods.js';
 
     //import 'bootstrap/dist/css/bootstrap.css'
     //import 'bootstrap-vue/dist/bootstrap-vue.css'
     //import 'pc-bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.css';
     import { clearInterval } from 'timers';
-import { error } from 'util';
+    import { error } from 'util';
 
     //Vue.use(BootstrapVue);
     Vue.use(jquery);
@@ -76,6 +74,8 @@ import { error } from 'util';
                 contractAddress: this.$router.history.current.params.contractAddress,
                 pollData: null,
                 refresh: null,
+                currentUser: window.web3.eth.accounts[0],
+                currentDate: Date.now()
             }
         },
         name: 'Vote',
@@ -85,7 +85,7 @@ import { error } from 'util';
                 this.getPollData();
                 this.refresh = setInterval(function () {
                     window.instanceVue.getPollData();
-                }, 15000);
+                }, 5000);
             });
         },
         destroy() {
@@ -95,149 +95,128 @@ import { error } from 'util';
 
             pollVoteOpenPrompt()
             {
-                if (document.getElementById('pollVoteBackground')) return;
+                if(document.getElementById('requestBackground')) return;
 
-                var background  = document.createElement('div');
-                var container   = document.createElement('div');
-                var loader      = document.createElement('div');
+                Methods.displayBackground();
 
-                background      .setAttribute('id', 'pollVoteBackground');
-
-                background      .setAttribute('class', 'requestBackground');
-                container       .setAttribute('class', 'requestContainer');
-                loader          .setAttribute('class', 'requestLoader');
-
-                container       .appendChild(loader);
-
-                document.body.appendChild(background);
-                document.body.appendChild(container);
-
-                BlockPoll.getContract(this.contractAddress).then(function(contract)
+                Methods.displayLoader((loader) =>
                 {
-                    BlockPoll.getPollData(contract).then(function(pollData)
+                    BlockPoll.getContract(this.contractAddress).then(function(contract)
                     {
-                        BlockPoll.parsePollData(contract, pollData).then(function(pollObject)
+                        BlockPoll.getPollData(contract).then(function(pollData)
                         {
-                            self.pollData = pollObject;
-
-                            loader.remove();
-
-                            var popup       = document.createElement('div');
-                            var buttons     = document.createElement('div');
-                            var list        = document.createElement('ul');
-                            var confirm     = document.createElement('button');
-                            var cancel      = document.createElement('button');
-
-                            popup           .setAttribute('class', 'requestPopup');
-                            buttons         .setAttribute('class', 'requestPopupButtons');
-                            confirm         .setAttribute('class', 'requestPopupConfirm');
-                            cancel          .setAttribute('class', 'requestPopupCancel');
-
-                            popup           .innerHTML += `<div class="requestPopupTitle">Vote</div>`;
-
-                            //for(var x = 0; x < pollData.pollItems.length; x++) list.innerHTML += `<li><span>${pollObject.pollItems[x].name}</span><input type="radio" name="vote" value="${pollObject.pollItems[x].name}" /></li>`;
-
-                            confirm         .innerText = 'Send Vote';
-                            cancel          .innerText = 'Cancel';
-
-                            cancel          .addEventListener('click', () =>
+                            BlockPoll.parsePollData(contract, pollData).then(function(pollObject)
                             {
-                                container.remove();
-                                background.remove();
+                                setTimeout(() =>
+                                {
+                                    loader.remove();
+
+                                    var popup       = document.createElement('div');
+                                    var buttons     = document.createElement('div');
+                                    var list        = document.createElement('ul');
+                                    var confirm     = document.createElement('button');
+                                    var cancel      = document.createElement('button');
+
+                                    popup           .setAttribute('class', 'requestPopup');
+                                    buttons         .setAttribute('class', 'requestPopupButtons');
+                                    list            .setAttribute('class', 'requestPopupList');
+                                    confirm         .setAttribute('class', 'requestPopupConfirm');
+                                    cancel          .setAttribute('class', 'requestPopupCancel');
+
+                                    popup           .innerHTML += `<div class="requestPopupTitle">Vote</div>`;
+
+                                    for(var x = 0; x < pollObject.pollItems.length; x++)
+                                    {
+                                        list.innerHTML += x === 0
+                                        ? `<li class="requestPopupListElement"><input class="requestPopupListElementRadio" type="radio" name="vote" value="${pollObject.pollItems[x].name}" checked /><div class="requestPopupListElementLabel">${pollObject.pollItems[x].name}</div></li>`
+                                        : `<li class="requestPopupListElement"><input class="requestPopupListElementRadio" type="radio" name="vote" value="${pollObject.pollItems[x].name}" /><div class="requestPopupListElementLabel">${pollObject.pollItems[x].name}</div></li>`;
+                                    }
+
+                                    confirm         .innerText = 'Send Vote';
+                                    cancel          .innerText = 'Cancel';
+
+                                    confirm         .addEventListener('click', () =>
+                                    {
+                                        var choiceSelected = null;
+
+                                        const pollChoices = popup.children[1].children;
+
+                                        for(var x = 0; x < pollChoices.length; x++)
+                                        {
+                                            if(pollChoices[x].children[0].checked) choiceSelected = pollChoices[x].children[0].value;
+                                        }
+                                        
+                                        popup.remove();
+
+                                        Methods.displayLoader((loader) =>
+                                        {
+                                            BlockPoll.vote(contract, choiceSelected).then(function(result)
+                                            {
+                                                BlockPoll.getTransactionReceiptMined(result).then(function(res)
+                                                {
+                                                    loader.remove();
+                                                    Methods.displaySuccess('Vote successfully added !');
+
+                                                    if(document.getElementById('pollVote')) document.getElementById('pollVote').remove();
+                                                }).catch(function(error)
+                                                {
+                                                    loader.remove();
+                                                    Methods.displayError(error);
+                                                });
+                                            }).catch(function(error)
+                                            {
+                                                loader.remove();
+                                                Methods.displayError(error);
+                                            });
+                                        });
+                                    });
+
+                                    cancel          .addEventListener('click', () =>
+                                    {
+                                        if(document.getElementById('requestContainer')) document.getElementById('requestContainer').remove();
+                                        if(document.getElementById('requestBackground')) document.getElementById('requestBackground').remove();
+                                    });
+
+                                    buttons         .appendChild(confirm);
+                                    buttons         .appendChild(cancel);
+                                    popup           .appendChild(list);
+                                    popup           .appendChild(buttons);
+
+                                    document.getElementById('requestContainer').appendChild(popup);
+
+                                }, 500);
+
+                            }).catch(function(error)
+                            {
+                                loader.remove();
+                                Methods.displayError(error);
                             });
-
-                            buttons         .appendChild(confirm);
-                            buttons         .appendChild(cancel);
-                            popup           .appendChild(list);
-                            popup           .appendChild(buttons);
-                            container       .appendChild(popup);
-
                         }).catch(function(error)
                         {
                             loader.remove();
-
-                            var errorBlock = document.createElement('div');
-                            var errorClose = document.createElement('button');
-
-                            errorBlock.setAttribute('class', 'requestError');
-                            errorClose.setAttribute('class', 'requestErrorClose');
-
-                            errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                            errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                            errorClose.innerText = 'Close';
-
-                            errorClose.addEventListener('click', () => {
-                                container.remove();
-                                background.remove();
-                            });
-
-                            errorBlock.appendChild(errorClose);
-                            container.appendChild(errorBlock);
+                            Methods.displayError(error);
                         });
                     }).catch(function(error)
                     {
                         loader.remove();
-
-                        var errorBlock = document.createElement('div');
-                        var errorClose = document.createElement('button');
-
-                        errorBlock.setAttribute('class', 'requestError');
-                        errorClose.setAttribute('class', 'requestErrorClose');
-
-                        errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                        errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                        errorClose.innerText = 'Close';
-
-                        errorClose.addEventListener('click', () => {
-                            container.remove();
-                            background.remove();
-                        });
-
-                        errorBlock.appendChild(errorClose);
-                        container.appendChild(errorBlock);
+                        Methods.displayError(error);
                     });
-                }).catch(function(error)
-                {
-                    loader.remove();
-
-                    var errorBlock = document.createElement('div');
-                    var errorClose = document.createElement('button');
-
-                    errorBlock.setAttribute('class', 'requestError');
-                    errorClose.setAttribute('class', 'requestErrorClose');
-
-                    errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                    errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                    errorClose.innerText = 'Close';
-
-                    errorClose.addEventListener('click', () => {
-                        container.remove();
-                        background.remove();
-                    });
-
-                    errorBlock.appendChild(errorClose);
-                    container.appendChild(errorBlock);
                 });
             },
 
+            /****************************************************************************************************/
+
             closePollOpenPrompt()
             {
-                if (document.getElementById('closePollBackground')) return;
+                if(document.getElementById('requestBackground')) return;
 
-                var background  = document.createElement('div');
-                var container   = document.createElement('div');
+                Methods.displayBackground();
+
                 var popup       = document.createElement('div');
                 var buttons     = document.createElement('div');
                 var confirm     = document.createElement('button');
                 var cancel      = document.createElement('button');
 
-                background      .setAttribute('id', 'closePollBackground');
-
-                background      .setAttribute('class', 'requestBackground');
-                container       .setAttribute('class', 'requestContainer');
                 popup           .setAttribute('class', 'requestPopup');
                 buttons         .setAttribute('class', 'requestPopupButtons');
                 confirm         .setAttribute('class', 'requestPopupConfirm');
@@ -253,116 +232,60 @@ import { error } from 'util';
                 {
                     popup.remove();
 
-                    var loader = document.createElement('div');
-
-                    loader.setAttribute('class', 'requestLoader');
-
-                    container.appendChild(loader);
-
-                    BlockPoll.getContract(this.contractAddress).then(function(result)
+                    Methods.displayLoader((loader) =>
                     {
-                        BlockPoll.closePoll(result).then(function(result)
+                        BlockPoll.getContract(this.contractAddress).then(function(result)
                         {
-                            BlockPoll.getTransactionReceiptMined(result).then(function(res)
+                            BlockPoll.closePoll(result).then(function(result)
                             {
-                                container.remove();
-                                background.remove();
+                                BlockPoll.getTransactionReceiptMined(result).then(function(res)
+                                {
+                                    loader.remove();
 
-                                if(document.getElementById('pollStatus') == null) return;
+                                    Methods.displaySuccess('Poll closed successfully !');
 
-                                document.getElementById('pollStatus').setAttribute('class', 'activeBlockStatusValueInactive');
-                                document.getElementById('pollStatus').innerText = 'Ended';
+                                    if(document.getElementById('pollStatus') == null) return;
 
-                                if(document.getElementById('pollActivate')) document.getElementById('pollActivate').remove();
-                                if(document.getElementById('pollClose')) document.getElementById('pollClose').remove();
-                                if(document.getElementById('addItem')) document.getElementById('addItem').remove();
-                                if(document.getElementById('pollVote')) document.getElementById('pollVote').remove();
+                                    document.getElementById('pollStatus').setAttribute('class', 'activeBlockStatusValueInactive');
+                                    document.getElementById('pollStatus').innerText = 'Closed';
 
+                                    if(document.getElementById('pollActivate')) document.getElementById('pollActivate').remove();
+                                    if(document.getElementById('pollClose')) document.getElementById('pollClose').remove();
+                                    if(document.getElementById('addItem')) document.getElementById('addItem').remove();
+                                    if(document.getElementById('pollVote')) document.getElementById('pollVote').remove();
+
+                                }).catch(function(error)
+                                {
+                                    loader.remove();
+                                    Methods.displayError(error);
+                                });
                             }).catch(function(error)
                             {
                                 loader.remove();
-
-                                var errorBlock = document.createElement('div');
-                                var errorClose = document.createElement('button');
-
-                                errorBlock.setAttribute('class', 'requestError');
-                                errorClose.setAttribute('class', 'requestErrorClose');
-
-                                errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                                errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                                errorClose.innerText = 'Close';
-
-                                errorClose.addEventListener('click', () => {
-                                    container.remove();
-                                    background.remove();
-                                });
-
-                                errorBlock.appendChild(errorClose);
-                                container.appendChild(errorBlock);
+                                Methods.displayError(error);
                             });
                         }).catch(function(error)
                         {
                             loader.remove();
-
-                            var errorBlock = document.createElement('div');
-                            var errorClose = document.createElement('button');
-
-                            errorBlock.setAttribute('class', 'requestError');
-                            errorClose.setAttribute('class', 'requestErrorClose');
-
-                            errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                            errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                            errorClose.innerText = 'Close';
-
-                            errorClose.addEventListener('click', () => {
-                                container.remove();
-                                background.remove();
-                            });
-
-                            errorBlock.appendChild(errorClose);
-                            container.appendChild(errorBlock);
+                            Methods.displayError(error);
                         });
-                    }).catch(function(error)
-                    {
-                        loader.remove();
-
-                        var errorBlock = document.createElement('div');
-                        var errorClose = document.createElement('button');
-
-                        errorBlock.setAttribute('class', 'requestError');
-                        errorClose.setAttribute('class', 'requestErrorClose');
-
-                        errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                        errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                        errorClose.innerText = 'Close';
-
-                        errorClose.addEventListener('click', () => {
-                            container.remove();
-                            background.remove();
-                        });
-
-                        errorBlock.appendChild(errorClose);
-                        container.appendChild(errorBlock);
                     });
                 });
 
                 cancel          .addEventListener('click', () =>
                 {
-                    container.remove();
-                    background.remove();
+                    if(document.getElementById('requestContainer')) document.getElementById('requestContainer').remove();
+                    if(document.getElementById('requestBackground')) document.getElementById('requestBackground').remove();
                 });
 
                 buttons         .appendChild(confirm);
                 buttons         .appendChild(cancel);
                 popup           .appendChild(buttons);
-                container       .appendChild(popup);
 
-                document.body.appendChild(background);
-                document.body.appendChild(container);
+                document.getElementById('requestContainer').appendChild(popup);
             },
+
+            /****************************************************************************************************/
 
             buildDate(date)
             {
@@ -378,21 +301,19 @@ import { error } from 'util';
                 return str;
             },
 
+            /****************************************************************************************************/
+
             addItemOpenForm()
             {
-                if (document.getElementById('addItemBackground')) return;
+                if(document.getElementById('requestBackground')) return;
 
-                var background  = document.createElement('div');
-                var container   = document.createElement('div');
+                Methods.displayBackground();
+
                 var popup       = document.createElement('div');
                 var buttons     = document.createElement('div');
                 var confirm     = document.createElement('button');
                 var cancel      = document.createElement('button');
 
-                background      .setAttribute('id', 'addItemBackground');
-
-                background      .setAttribute('class', 'requestBackground');
-                container       .setAttribute('class', 'requestContainer');
                 popup           .setAttribute('class', 'requestPopup');
                 buttons         .setAttribute('class', 'requestPopupButtons');
                 confirm         .setAttribute('class', 'requestPopupConfirm');
@@ -416,122 +337,62 @@ import { error } from 'util';
 
                     popup.remove();
 
-                    var loader = document.createElement('div');
-
-                    loader.setAttribute('class', 'requestLoader');
-
-                    container.appendChild(loader);
-
-                    BlockPoll.getContract(this.contractAddress).then(function(result)
+                    Methods.displayLoader((loader) =>
                     {
-                        BlockPoll.addPollItem(result, itemName).then(function(result)
+                        BlockPoll.getContract(this.contractAddress).then(function(result)
                         {
-                            BlockPoll.getTransactionReceiptMined(result).then(function(res)
+                            BlockPoll.addPollItem(result, itemName).then(function(result)
                             {
-                                container.remove();
-                                background.remove();
+                                BlockPoll.getTransactionReceiptMined(result).then(function(res)
+                                {
+                                    loader.remove();
 
+                                    Methods.displaySuccess(`Item "<b>${itemName}</b>" successfully added to poll !`);
+
+                                }).catch(function(error)
+                                {
+                                    loader.remove();
+                                    Methods.displayError(error);
+                                });
                             }).catch(function(error)
                             {
                                 loader.remove();
-
-                                var errorBlock = document.createElement('div');
-                                var errorClose = document.createElement('button');
-
-                                errorBlock.setAttribute('class', 'requestError');
-                                errorClose.setAttribute('class', 'requestErrorClose');
-
-                                errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                                errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                                errorClose.innerText = 'Close';
-
-                                errorClose.addEventListener('click', () => {
-                                    container.remove();
-                                    background.remove();
-                                });
-
-                                errorBlock.appendChild(errorClose);
-                                container.appendChild(errorBlock);
+                                Methods.displayError(error);
                             });
                         }).catch(function(error)
                         {
                             loader.remove();
-
-                            var errorBlock = document.createElement('div');
-                            var errorClose = document.createElement('button');
-
-                            errorBlock.setAttribute('class', 'requestError');
-                            errorClose.setAttribute('class', 'requestErrorClose');
-
-                            errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                            errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                            errorClose.innerText = 'Close';
-
-                            errorClose.addEventListener('click', () => {
-                                container.remove();
-                                background.remove();
-                            });
-
-                            errorBlock.appendChild(errorClose);
-                            container.appendChild(errorBlock);
+                            Methods.displayError(error);
                         });
-                    }).catch(function(error)
-                    {
-                        loader.remove();
-
-                        var errorBlock = document.createElement('div');
-                        var errorClose = document.createElement('button');
-
-                        errorBlock.setAttribute('class', 'requestError');
-                        errorClose.setAttribute('class', 'requestErrorClose');
-
-                        errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                        errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                        errorClose.innerText = 'Close';
-
-                        errorClose.addEventListener('click', () => {
-                            container.remove();
-                            background.remove();
-                        });
-
-                        errorBlock.appendChild(errorClose);
-                        container.appendChild(errorBlock);
                     });
                 });
 
                 cancel          .addEventListener('click', () =>
                 {
-                    container.remove();
-                    background.remove();
+                    if(document.getElementById('requestContainer')) document.getElementById('requestContainer').remove();
+                    if(document.getElementById('requestBackground')) document.getElementById('requestBackground').remove();
                 });
 
                 buttons         .appendChild(confirm);
                 buttons         .appendChild(cancel);
                 popup           .appendChild(buttons);
-                container       .appendChild(popup);
 
-                document.body.appendChild(background);
-                document.body.appendChild(container);
+                document.getElementById('requestContainer').appendChild(popup);
             },
+
+            /****************************************************************************************************/
 
             activateContractOpenPrompt()
             {
-                if(document.getElementById('activeContractBackground')) return;
+                if(document.getElementById('requestBackground')) return;
 
-                var background  = document.createElement('div');
-                var container   = document.createElement('div');
+                Methods.displayBackground();
+
                 var popup       = document.createElement('div');
                 var buttons     = document.createElement('div');
                 var confirm     = document.createElement('button');
                 var cancel      = document.createElement('button');
 
-                background      .setAttribute('id', 'activeContractBackground');
-
-                background      .setAttribute('class', 'requestBackground');
-                container       .setAttribute('class', 'requestContainer');
                 popup           .setAttribute('class', 'requestPopup');
                 buttons         .setAttribute('class', 'requestPopupButtons');
                 confirm         .setAttribute('class', 'requestPopupConfirm');
@@ -547,115 +408,82 @@ import { error } from 'util';
                 {
                     popup.remove();
 
-                    var loader = document.createElement('div');
-
-                    loader.setAttribute('class', 'requestLoader');
-
-                    container.appendChild(loader);
-
-                    BlockPoll.getContract(this.contractAddress).then(function(result)
+                    Methods.displayLoader((loader) =>
                     {
-                        BlockPoll.setActive(result).then(function(result)
+                        BlockPoll.getContract(this.contractAddress).then(function(contract)
                         {
-                            BlockPoll.getTransactionReceiptMined(result).then(function(res)
+                            BlockPoll.getPollData(contract).then(function(pollData)
                             {
-                                document.getElementById('pollStatus').setAttribute('class', 'activeBlockStatusValueActive');
-                                document.getElementById('pollStatus').innerText = 'Active';
+                                BlockPoll.parsePollData(contract, pollData).then(function(pollObject)
+                                {
+                                    setTimeout(() =>
+                                    {
+                                        if(pollObject.pollItems.length < 2)
+                                        {
+                                            loader.remove();
+                                            return Methods.displayError('Poll requires at least two items before being activated');
+                                        }
 
-                                if(document.getElementById('pollActivate')) document.getElementById('pollActivate').remove();
-                                if(document.getElementById('addItem')) document.getElementById('addItem').remove();
+                                        BlockPoll.setActive(contract).then(function(result)
+                                        {
+                                            BlockPoll.getTransactionReceiptMined(result).then(function(res)
+                                            {
+                                                loader.remove();
 
-                                if(document.getElementById('pollVote')) document.getElementById('pollVote').removeAttribute('style');
+                                                document.getElementById('pollStatus').setAttribute('class', 'activeBlockStatusValueActive');
+                                                document.getElementById('pollStatus').innerText = 'Active';
 
-                                container.remove();
-                                background.remove();
+                                                if(document.getElementById('pollActivate')) document.getElementById('pollActivate').remove();
+                                                if(document.getElementById('addItem')) document.getElementById('addItem').remove();
 
+                                                if(document.getElementById('pollVote') && pollObject.alreadyVoted == false) document.getElementById('pollVote').removeAttribute('style');
+
+                                                Methods.displaySuccess('Poll is now opened !');
+
+                                            }).catch(function(error)
+                                            {
+                                                loader.remove();
+                                                Methods.displayError(error);
+                                            });
+                                        }).catch(function(error)
+                                        {
+                                            loader.remove();
+                                            Methods.displayError(error);
+                                        });
+                                    }, 2000);
+
+                                }).catch(function(error)
+                                {
+                                    loader.remove();
+                                    Methods.displayError(error);
+                                });
                             }).catch(function(error)
                             {
                                 loader.remove();
-
-                                var errorBlock = document.createElement('div');
-                                var errorClose = document.createElement('button');
-
-                                errorBlock.setAttribute('class', 'requestError');
-                                errorClose.setAttribute('class', 'requestErrorClose');
-
-                                errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                                errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                                errorClose.innerText = 'Close';
-
-                                errorClose.addEventListener('click', () =>
-                                {
-                                    container.remove();
-                                    background.remove();
-                                });
-
-                                errorBlock.appendChild(errorClose);
-                                container.appendChild(errorBlock);
+                                Methods.displayError(error);
                             });
                         }).catch(function(error)
                         {
                             loader.remove();
-
-                            var errorBlock = document.createElement('div');
-                            var errorClose = document.createElement('button');
-
-                            errorBlock.setAttribute('class', 'requestError');
-                            errorClose.setAttribute('class', 'requestErrorClose');
-
-                            errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                            errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                            errorClose.innerText = 'Close';
-
-                            errorClose.addEventListener('click', () => {
-                                container.remove();
-                                background.remove();
-                            });
-
-                            errorBlock.appendChild(errorClose);
-                            container.appendChild(errorBlock);
+                            Methods.displayError(error);
                         });
-                    }).catch(function(error)
-                    {
-                        loader.remove();
-
-                        var errorBlock = document.createElement('div');
-                        var errorClose = document.createElement('button');
-
-                        errorBlock.setAttribute('class', 'requestError');
-                        errorClose.setAttribute('class', 'requestErrorClose');
-
-                        errorBlock.innerHTML += `<div class="requestErrorTitle">Error</div>`;
-                        errorBlock.innerHTML += `<div class="requestErrorMessage">${error}</div>`;
-
-                        errorClose.innerText = 'Close';
-
-                        errorClose.addEventListener('click', () => {
-                            container.remove();
-                            background.remove();
-                        });
-
-                        errorBlock.appendChild(errorClose);
-                        container.appendChild(errorBlock);
                     });
                 });
 
                 cancel          .addEventListener('click', () =>
                 {
-                    container.remove();
-                    background.remove();
+                    if(document.getElementById('requestContainer')) document.getElementById('requestContainer').remove();
+                    if(document.getElementById('requestBackground')) document.getElementById('requestBackground').remove();
                 });
 
                 buttons         .appendChild(confirm);
                 buttons         .appendChild(cancel);
-                popup           .appendChild(buttons); 
-                container       .appendChild(popup);
+                popup           .appendChild(buttons);
 
-                document.body.appendChild(background);
-                document.body.appendChild(container);
+                document.getElementById('requestContainer').appendChild(popup);
             },
+
+            /****************************************************************************************************/
 
             getPollData() {
                 var self = this;

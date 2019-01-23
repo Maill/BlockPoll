@@ -61,6 +61,7 @@
     import BootstrapVue from 'bootstrap-vue';
     import BlockPoll from '../eth.js';
     import jquery from 'jquery';
+    import Methods from '../assets/methods.js';
 
     import 'bootstrap/dist/css/bootstrap.css'
     import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -104,8 +105,14 @@
                         evt.preventDefault();
                         return;
                     }
-                    
-                    BlockPoll.deployContract(this.name, selectedDate.getTime());
+
+                    Methods.displayBackground();
+
+                    Methods.displayLoader((loader) =>
+                    {
+                        BlockPoll.deployContract(this.name, selectedDate.getTime());
+                    });
+                
                 } catch (exp) {
                     // eslint-disable-next-line
                     console.log(exp);
@@ -115,6 +122,8 @@
                 }
             },
             contractDeployed(contract) {
+                if(document.getElementById('requestContainer')) document.getElementById('requestContainer').remove();
+                if(document.getElementById('requestBackground')) document.getElementById('requestBackground').remove();
                 window.location.href = '/#/' + contract.address;
             }
         },
